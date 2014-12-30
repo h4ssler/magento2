@@ -31,7 +31,9 @@
         "zendframework/zend-http": "2.3.1",
         "magento/zendframework1": "1.12.9-patch1",
         "composer/composer": "1.0.0-alpha8",
-        "monolog/monolog": "1.11.0"
+        "monolog/monolog": "1.11.0",
+        "magento/magento-composer-installer": "*",
+        "schumacherfm/mage2-advanced-rest-permissions": "dev-master"
     },
     "require-dev": {
         "phpunit/phpunit": "4.1.0",
@@ -201,5 +203,11 @@
             "Magento\\ToolkitFramework\\": "dev/tools/performance-toolkit/framework/Magento/ToolkitFramework/",
             "Magento\\Setup\\": "setup/module/Magento/Setup/src/"
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:SchumacherFM/mage2-advanced-rest-permissions.git"
+        }
+    ]
 }

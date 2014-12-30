@@ -35,8 +35,7 @@
     <route url="/V1/products/:productSku" method="GET">
         <service class="Magento\Catalog\Api\ProductRepositoryInterface" method="get"/>
         <resources>
-            <resource ref="anonymous" />
-            <!--<resource ref="Magento_Catalog::products" />-->
+            <resource ref="Magento_Catalog::products" />
         </resources>
     </route>
 
@@ -49,8 +48,7 @@
     <route url="/V1/products/attributes/:attributeCode" method="GET">
         <service class="Magento\Catalog\Api\ProductAttributeRepositoryInterface" method="get"/>
         <resources>
-            <resource ref="anonymous" />
-            <!--<resource ref="Magento_Catalog::attributes_attributes" />-->
+            <resource ref="Magento_Catalog::attributes_attributes" />
         </resources>
     </route>
     <route url="/V1/products/attributes" method="PUT">
@@ -200,8 +198,7 @@
     <route url="/V1/products/:productSku/media/:imageId" method="GET">
         <service class="Magento\Catalog\Api\ProductAttributeMediaGalleryManagementInterface" method="get"/>
         <resources>
-            <resource ref="anonymous" />
-            <!--<resource ref="Magento_Catalog::catalog"/>-->
+            <resource ref="Magento_Catalog::catalog"/>
         </resources>
     </route>
     <route url="/V1/products/:productSku/media" method="POST">
@@ -225,8 +222,7 @@
     <route url="/V1/products/:productSku/media" method="GET">
         <service class="Magento\Catalog\Api\ProductAttributeMediaGalleryManagementInterface" method="getList"/>
         <resources>
-            <resource ref="anonymous" />
-            <!--<resource ref="Magento_Catalog::catalog"/>-->
+            <resource ref="Magento_Catalog::catalog"/>
         </resources>
     </route>
 
@@ -291,10 +287,7 @@
     <route url="/V1/categories" method="GET">
         <service class="Magento\Catalog\Api\CategoryManagementInterface" method="getTree" />
         <resources>
-            <!--Cyrill: add resource anon for use in Magento\Webapi\Model\Plugin\GuestAuthorization-->
-            <!--all resources must return NOT false to allow access so comment out:-->
-            <!--<resource ref="Magento_Catalog::categories" />-->
-            <resource ref="anonymous" />
+            <resource ref="Magento_Catalog::categories" />
         </resources>
     </route>
     <route url="/V1/categories/:id" method="PUT">
@@ -390,8 +383,7 @@
     <route url="/V1/categories/:categoryId/products" method="GET">
         <service class="Magento\Catalog\Api\CategoryLinkManagementInterface" method="getAssignedProducts" />
         <resources>
-            <resource ref="anonymous" />
-            <!--<resource ref="Magento_Catalog::categories" />-->
+            <resource ref="Magento_Catalog::categories" />
         </resources>
     </route>
     <route url="/V1/categories/:categoryId/products" method="POST">

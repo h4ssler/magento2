@@ -31,6 +31,16 @@ class CompositeUserContext implements \Magento\Authorization\Model\UserContextIn
     public function __construct(CompositeHelper $compositeHelper, $userContexts = [])
     {
         $userContexts = $compositeHelper->filterAndSortDeclaredComponents($userContexts);
+
+//        Cyrill: all contexts in their correct order:
+//        string 'Magento\Webapi\Model\Authorization\TokenUserContext' (length=51)
+//        string 'Magento\Customer\Model\Authorization\CustomerSessionUserContext' (length=63)
+//        string 'Magento\User\Model\Authorization\AdminSessionUserContext' (length=56)
+//        string 'Magento\Webapi\Model\Authorization\OauthUserContext' (length=51)
+//        string 'Magento\Webapi\Model\Authorization\GuestUserContext' (length=51)
+//        see then method getUserContext() which chooses the correct context.
+//        a context can be removed from Magento/Webapi/etc/webapi_rest/di.xml to allow "more security"
+
         foreach ($userContexts as $userContext) {
             $this->add($userContext['type']);
         }
@@ -83,6 +93,9 @@ class CompositeUserContext implements \Magento\Authorization\Model\UserContextIn
                 $this->chosenUserContext = false;
             }
         }
+//        \Zend_Debug::dump(get_class($this->chosenUserContext));
+//        exit;
+
         return $this->chosenUserContext;
     }
 }

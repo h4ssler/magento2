@@ -144,6 +144,7 @@ class Rest implements \Magento\Framework\App\FrontControllerInterface
         $this->areaList->getArea($this->_appState->getAreaCode())
             ->load(\Magento\Framework\App\Area::PART_TRANSLATE);
         try {
+            // cyrill: NFI how checkPerm really works ... takes to much time to dive into it.
             $this->checkPermissions();
             $route = $this->getCurrentRoute();
             if ($route->isSecure() && !$this->_request->isSecure()) {
@@ -183,6 +184,11 @@ class Rest implements \Magento\Framework\App\FrontControllerInterface
      */
     protected function overrideParams(array $inputData, array $parameters)
     {
+//        \Zend_Debug::dump(get_class($this->userContext));
+//        \Zend_Debug::dump($this->userContext->getUserType());
+//        exit;
+
+
         foreach ($parameters as $name => $paramData) {
             $arrayKeys = explode('.', $name);
             if ($paramData[Converter::KEY_FORCE] || !$this->isNestedArrayValueSet($inputData, $arrayKeys)) {

@@ -1,0 +1,5 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/magento/magento2/master/lib/internal/Magento/Framework/ObjectManager/etc/config.xsd">
+    <preference for="SchumacherFM\AdvancedRESTPerms\Service\V1\GuestAuthServiceInterface"
+                type="SchumacherFM\AdvancedRESTPerms\Service\V1\GuestAuthService"/>
+</config>

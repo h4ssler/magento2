@@ -1,0 +1,30 @@
+{
+    "name": "schumacherfm/mage2-fe-login",
+    "description": "Magento2: Fe Login",
+    "require": {
+        "magento/framework": "*",
+        "magento/module-webapi": "*",
+        "magento/module-integration": "*"
+    },
+    "type": "magento2-module",
+    "version": "0.0.1",
+    "license": [
+        "OSL-3.0",
+        "AFL-3.0"
+    ],
+    "extra": {
+        "map": [
+            [
+                "*",
+                "SchumacherFM/FeLogin"
+            ]
+        ]
+    },
+    "authors": [
+        {
+            "name": "Cyrill Schumacher",
+            "homepage": "http://cyrillschumacher.com/",
+            "role": "Developer"
+        }
+    ]
+}

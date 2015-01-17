@@ -52,7 +52,7 @@
         <referenceContainer name="page.top">
             <block class="Magento\Theme\Block\Html\Topmenu" name="catalog.topnav" template="html/topmenu.phtml" ttl="3600"/>
             <container name="top.container" as="topContainer" label="After Page Header Top" htmlTag="div" htmlClass="top-container"/>
-            <block class="Magento\Theme\Block\Html\Breadcrumbs" name="breadcrumbs" as="breadcrumbs"/>
+            <block class="Magento\Theme\Block\Html\Breadcrumbs" template="html/breadcrumbs.twig" name="breadcrumbs" as="breadcrumbs"/>
         </referenceContainer>
         <referenceContainer name="columns.top">
             <block class="Magento\Theme\Block\Html\Title" name="page.main.title" template="html/title.phtml"/>

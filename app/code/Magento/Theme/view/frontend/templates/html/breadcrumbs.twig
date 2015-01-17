@@ -1,0 +1,19 @@
+{% if crumbs %}
+<div class="breadcrumbs">
+    <ul class="items">
+    {% for crumbName,crumbInfo in crumbs %}
+        <li class="item {{ crumbName }}">
+            {% if crumbInfo.link %}
+                <a href="{{ crumbInfo.link }}" title="{{ crumbInfo.title }}">
+                    {{ crumbInfo.label }}
+                </a>
+            {% elseif crumbInfo.last %}
+                <strong>{{ crumbInfo.label }}</strong>
+            {% else %}
+                {{ crumbInfo.label }}
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}

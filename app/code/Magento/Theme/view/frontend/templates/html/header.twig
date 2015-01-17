@@ -1,7 +1,7 @@
-<h1>hello TWig</h1>
+{% if getShowPart() == 'welcome' %}
+    <li class="greet welcome">{{ getWelcome() }}</li>
+{% endif %}
 
-{{ data.show_part }} from twig
-<hr>
-xx {{  getShowPart() }} yy
-
-<hr>
+{% if getShowPart() == 'other' %}
+    {{ getChildHtml() }}
+{% endif %}

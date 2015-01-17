@@ -17,7 +17,7 @@
             <block class="Magento\Theme\Block\Html\Notices" name="global_notices" template="html/notices.phtml"/>
         </referenceContainer>
         <referenceBlock name="top.links">
-            <block class="Magento\Theme\Block\Html\Header" name="header" as="header" before="-">
+            <block class="Magento\Theme\Block\Html\Header" name="header" as="header" before="-" template="html/header.twig">
                 <arguments>
                     <argument name="show_part" xsi:type="string">welcome</argument>
                 </arguments>

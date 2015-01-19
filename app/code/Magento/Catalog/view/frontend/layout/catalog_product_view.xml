@@ -86,7 +86,7 @@
                         <block class="Magento\Catalog\Block\Product\View" name="product.info.mailto" template="product/view/mailto.phtml"/>
                     </container>
                 </container>
-                <block class="Magento\Catalog\Block\Product\View\Description" name="product.info.overview" template="product/view/attribute.phtml" group="detailed_info" after="product.info.extrahint">
+                <block class="Magento\Catalog\Block\Product\View\Description" name="product.info.overview" template="product/view/attribute.md" group="detailed_info" after="product.info.extrahint">
                     <arguments>
                         <argument name="at_call" xsi:type="string">getShortDescription</argument>
                         <argument name="at_code" xsi:type="string">short_description</argument>
@@ -104,7 +104,7 @@
                 </block>
             </container>
             <block class="Magento\Catalog\Block\Product\View\Description" name="product.info.details" template="product/view/details.phtml" after="product.info.media">
-                <block class="Magento\Catalog\Block\Product\View\Description" name="product.info.description" template="product/view/attribute.phtml" group="detailed_info">
+                <block class="Magento\Catalog\Block\Product\View\Description" name="product.info.description" template="product/view/attribute.md" group="detailed_info">
                     <arguments>
                         <argument name="at_call" xsi:type="string">getDescription</argument>
                         <argument name="at_code" xsi:type="string">description</argument>

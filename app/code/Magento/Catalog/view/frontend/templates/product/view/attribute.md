@@ -1,0 +1,38 @@
+<?php
+/**
+ * Copyright © 2015 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/**
+ * Product view template
+ *
+ * @see \Magento\Catalog\Block\Product\View
+ */
+?>
+<?php
+$_helper = $this->helper('Magento\Catalog\Helper\Output');
+$_product = $this->getProduct();
+$_call = $this->getAtCall();
+$_code = $this->getAtCode();
+$_className = $this->getCssClass();
+$_attributeLabel = $this->getAtLabel();
+$_attributeType = $this->getAtType();
+$_attributeAddAttribute = $this->getAddAttribute();
+
+if ($_attributeLabel && $_attributeLabel == 'default') {
+    $_attributeLabel = $_product->getResource()->getAttribute($_code)->getFrontendLabel();
+}
+if ($_attributeType && $_attributeType == 'text') {
+    $_attributeValue = ($_helper->productAttribute($_product, $_product->$_call(), $_code)) ? $_product->getAttributeText($_code) : '';
+} else {
+    $_attributeValue = $_helper->productAttribute($_product, $_product->$_call(), $_code);
+}
+?>
+
+<?php if ($_attributeValue): ?>
+<div class="product attibute <?php echo $_className?>">
+    <?php if ($_attributeLabel != 'none'): ?><strong class="type"><?php echo $_attributeLabel?></strong><?php endif; ?>
+    <div markdown="1" class="value" <?php echo $_attributeAddAttribute;?>><?php echo $_attributeValue; ?></div>
+</div>
+<?php endif; ?>

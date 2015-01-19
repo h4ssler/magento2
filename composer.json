@@ -34,7 +34,8 @@
         "monolog/monolog": "1.11.0",
         "magento/magento-composer-installer": "*",
         "schumacherfm/mage2-advanced-rest-permissions": "dev-master",
-        "schumacherfm/mage2-twig": "dev-master"
+        "schumacherfm/mage2-twig": "dev-master",
+        "schumacherfm/mage2-markdown": "dev-master"
     },
     "require-dev": {
         "phpunit/phpunit": "4.1.0",
@@ -213,6 +214,10 @@
         {
             "type": "vcs",
             "url": "git@github.com:SchumacherFM/Magento2-Twig.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:SchumacherFM/Magento2-Markdown.git"
         }
     ]
 }

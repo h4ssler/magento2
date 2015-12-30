@@ -89,9 +89,13 @@ import (
     "github.com/corestoreio/csfw/store/scope"
 )
 
-// PackageConfiguration global configuration options for this package. Used in
-// Frontend and Backend.
-var PackageConfiguration = element.MustNewConfiguration(' . "\n$all" . ')
+// PackageConfiguration global configuration options for this package.
+// Used in frontend and backend. See init() for details.
+var PackageConfiguration   element.SectionSlice
+
+func init(){
+    PackageConfiguration = element.MustNewConfiguration(' . "\n$all" . ')
+}
     ');
 
     if (count($pathVariables) > 0) {

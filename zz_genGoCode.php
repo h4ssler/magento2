@@ -85,13 +85,13 @@ foreach (glob("app/code/Magento/*/etc/adminhtml/system.xml") as $systemXML) {
 package ' . $sm . '
 
 import (
-    "github.com/corestoreio/csfw/config"
+    "github.com/corestoreio/csfw/config/element"
     "github.com/corestoreio/csfw/store/scope"
 )
 
 // PackageConfiguration global configuration options for this package. Used in
 // Frontend and Backend.
-var PackageConfiguration = config.NewConfiguration(' . "\n$all" . ')
+var PackageConfiguration = element.MustNewConfiguration(' . "\n$all" . ')
     ');
 
     if (count($pathVariables) > 0) {
@@ -163,11 +163,11 @@ function fieldHidden($sectionID, $groupID, $fieldID, $default) {
 
     $path = $pathOrg = $sectionID . '/' . $groupID . '/' . $fieldID;
 
-    $ret = ['&config.Field{'];
+    $ret = ['&element.Field{'];
     $ret[] = sprintf('// Path: %s', $path);
     $ret[] = sprintf('ID:      `%s`,', $fieldID);
-    $ret[] = 'Type:     config.TypeHidden,';
-    $ret[] = 'Visible: config.VisibleNo,';
+    $ret[] = 'Type:     element.TypeHidden,';
+    $ret[] = 'Visible: element.VisibleNo,';
     if (false === empty($default)) {
         $ret[] = sprintf('Default: %s,', $default);
     }
@@ -198,14 +198,14 @@ function field(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultCon
         $default = @$grou[(string)$f->attributes()->id];
     }
 
-    $type = 'config.Type' . ucfirst($f->attributes()->type);
+    $type = 'element.Type' . ucfirst($f->attributes()->type);
     if (strpos($type, '\\') !== false) {
-        $type = 'config.TypeCustom, // @todo: ' . ucfirst($f->attributes()->type);
+        $type = 'element.TypeCustom, // @todo: ' . ucfirst($f->attributes()->type);
     }
 
     if (is_numeric($default)) {
         $intDefault = (int)$default;
-        if ($type === 'config.TypeSelect' && ($intDefault === 1 || $intDefault === 0)) {
+        if ($type === 'element.TypeSelect' && ($intDefault === 1 || $intDefault === 0)) {
             $default = $intDefault === 1 ? 'true' : 'false';
         }
         unset($moduleDefaultConfigFlat[$path]);
@@ -227,7 +227,7 @@ function field(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultCon
         unset($moduleDefaultConfigFlat[$path]);
     }
 
-    $ret = ['&config.Field{'];
+    $ret = ['&element.Field{'];
     if ($path !== $pathOrg) {
         $ret[] = sprintf('ConfigPath: `%s`, // Original: %s', $path, $pathOrg);
     }else{
@@ -247,7 +247,7 @@ function field(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultCon
     if ((int)$f->attributes()->sortOrder > 0) {
         $ret[] = sprintf('SortOrder: %d,', (int)$f->attributes()->sortOrder);
     }
-    $ret[] = 'Visible: config.VisibleYes,';
+    $ret[] = 'Visible: element.VisibleYes,';
 
     $scope = scope($f);
     if ('' !== $scope) {
@@ -270,7 +270,7 @@ function field(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultCon
 }
 
 function group(SimpleXMLElement $g) {
-    $ret = ['&config.Group{'];
+    $ret = ['&element.Group{'];
     $ret[] = 'ID:    "' . $g->attributes()->id . '",';
     if (trim($g->label) !== '') {
         $ret[] = 'Label:    `' . flattenString($g->label) . '`,';
@@ -298,7 +298,7 @@ function group(SimpleXMLElement $g) {
         $ret[] = 'HideInSingleStoreMode:    true,';
     }
 
-    $ret[] = "Fields: config.NewFieldSlice(\n{{fields}}\n),";
+    $ret[] = "Fields: element.NewFieldSlice(\n{{fields}}\n),";
     $ret[] = '},';
 
     return myImplode($ret);
@@ -306,9 +306,9 @@ function group(SimpleXMLElement $g) {
 
 
 function groupHidden($id) {
-    return sprintf('&config.Group{
+    return sprintf('&element.Group{
 				ID:    "%s",
-				Fields: config.NewFieldSlice(
+				Fields: element.NewFieldSlice(
 				    {{fields}}
 				),
 			},
@@ -318,7 +318,7 @@ function groupHidden($id) {
 }
 
 function section(SimpleXMLElement $s) {
-    $ret = ['&config.Section{'];
+    $ret = ['&element.Section{'];
 
     $ret[] = 'ID:    "' . $s->attributes()->id . '",';
     if (trim($s->label) !== '') {
@@ -335,15 +335,15 @@ function section(SimpleXMLElement $s) {
         $ret[] = 'Resource:  0,  // ' . $s->resource;
     }
 
-    $ret[] = "Groups: config.NewGroupSlice(\n{{groups}}\n),";
+    $ret[] = "Groups: element.NewGroupSlice(\n{{groups}}\n),";
     $ret[] = '},';
     return myImplode($ret);
 }
 
 function sectionHidden($id) {
-    return sprintf('&config.Section{
+    return sprintf('&element.Section{
 		ID: "%s",
-		Groups: config.NewGroupSlice(
+		Groups: element.NewGroupSlice(
 		    {{groups}}
 		),
 	},

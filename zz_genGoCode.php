@@ -95,7 +95,7 @@ var PackageConfiguration = config.NewConfiguration(' . "\n$all" . ')
     ');
 
     if (count($pathVariables) > 0) {
-        file_put_contents("zcode/config_{$sm}_var.go", '
+        file_put_contents("zcode/config_{$sm}_path.go", '
 // +build ignore
 
 package ' . $sm . '
@@ -164,7 +164,7 @@ function fieldHidden($sectionID, $groupID, $fieldID, $default) {
     $path = $pathOrg = $sectionID . '/' . $groupID . '/' . $fieldID;
 
     $ret = ['&config.Field{'];
-    $ret[] = sprintf('// Config Path: %s', $path);
+    $ret[] = sprintf('// Path: %s', $path);
     $ret[] = sprintf('ID:      `%s`,', $fieldID);
     $ret[] = 'Type:     config.TypeHidden,';
     $ret[] = 'Visible: config.VisibleNo,';
@@ -230,6 +230,8 @@ function field(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultCon
     $ret = ['&config.Field{'];
     if ($path !== $pathOrg) {
         $ret[] = sprintf('ConfigPath: `%s`, // Original: %s', $path, $pathOrg);
+    }else{
+        $ret[] = sprintf('// Path: %s', $path);
     }
     $ret[] = sprintf('ID:      "%s",', $f->attributes()->id);
     if ('' !== trim($f->label)) {

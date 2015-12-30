@@ -75,7 +75,10 @@ foreach (glob("app/code/Magento/*/etc/adminhtml/system.xml") as $systemXML) {
 
 package ' . $sm . '
 
-import "github.com/corestoreio/csfw/config"
+import (
+    "github.com/corestoreio/csfw/config"
+    "github.com/corestoreio/csfw/store/scope"
+)
 
 var PackageConfiguration = config.NewConfiguration(' . "\n$all" . ')
     ');
@@ -125,40 +128,44 @@ function fieldHidden($sectionID, $groupID, $fieldID, $default) {
             $default = $intDefault === 1 ? 'true' : 'false';
         }
     } elseif (empty($default)) {
-        $default = 'nil';
+        $default = '';
     } elseif (is_array($default)) {
         $default = '`' . json_encode($default) . '`';
     } else {
         $default = "`$default`";
     }
-    return sprintf('&config.Field{
-			// Path: `%s`,
-			ID:      "%s",
-			Type:     config.TypeHidden,
-			Visible: config.VisibleNo,
-			Scope:   config.NewScopePerm(config.ScopeDefaultID), // @todo search for that
-			Default: %s,
-		    },
-    ',
-        $sectionID . '/' . $groupID . '/' . $fieldID,
-        $fieldID,
-        $default
-    );
+
+    $path = $pathOrg = $sectionID . '/' . $groupID . '/' . $fieldID;
+
+    $ret = ['&config.Field{'];
+    $ret[] = sprintf('// Config Path: %s', $path);
+    $ret[] = sprintf('ID:      `%s`,', $fieldID);
+    $ret[] = 'Type:     config.TypeHidden,';
+    $ret[] = 'Visible: config.VisibleNo,';
+    if (false === empty($default)) {
+        $ret[] = sprintf('Default: %s,', $default);
+    }
+    $ret[] = '},';
+    return myImplode($ret);
 }
 
 function field(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultConfig, array &$moduleDefaultConfigFlat) {
     $default = '';
-    $backendModel = 'nil,';
-    $sourceModel = 'nil,';
+    $backendModel = '';
+    $sourceModel = '';
 
     if ($f->backend_model) {
-        $backendModel .= ' // ' . $f->backend_model;
+        $backendModel .= $f->backend_model;
     }
     if ($f->source_model) {
-        $sourceModel .= ' // ' . $f->source_model;
+        $sourceModel .= $f->source_model;
     }
 
-    $path = $sID . '/' . $gID . '/' . $f->attributes()->id;
+    $path = $pathOrg = $sID . '/' . $gID . '/' . $f->attributes()->id;
+    if (trim($f->config_path) !== '') {
+        $path = $f->config_path;
+    }
+
     if (isset($moduleDefaultConfig[(string)$sID])) {
         $sec = @$moduleDefaultConfig[(string)$sID];
         $grou = @$sec[(string)$gID];
@@ -176,14 +183,14 @@ function field(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultCon
             $default = $intDefault === 1 ? 'true' : 'false';
         }
         unset($moduleDefaultConfigFlat[$path]);
-    } elseif (empty($default)) {
-        $default = 'nil';
-    } elseif (is_array($default)) {
+    } elseif (true === empty($default)) {
+        $default = '';
+    } elseif (true === is_array($default)) {
         if (isset($default['_attribute']['backend_model'])) {
-            $backendModel .= ' // @todo ' . $default['_attribute']['backend_model'];
+            $backendModel .= ' @todo ' . $default['_attribute']['backend_model'];
             $default = 'nil';
         } elseif (isset($default['_attribute']['source_model'])) {
-            $sourceModel .= ' // @todo ' . $default['_attribute']['source_model'];
+            $sourceModel .= ' @todo ' . $default['_attribute']['source_model'];
             $default = 'nil';
         } else {
             $default = '`' . json_encode($default) . '`';
@@ -194,60 +201,88 @@ function field(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultCon
         unset($moduleDefaultConfigFlat[$path]);
     }
 
-    return sprintf('&config.Field{
-			// Path: `%s`,
-			ID:      "%s",
-			Label:   `%s`,
-			Comment: `%s`,
-			Type:     %s,
-			SortOrder: %d,
-			Visible: config.VisibleYes,
-			Scope:   %s,
-			Default: %s,
-			BackendModel: %s
-			SourceModel: %s
-		    },
-    ',
-        $path,
-        $f->attributes()->id,
-        $f->label,
-        trim($f->comment),
-        $type,
-        (int)$f->attributes()->sortOrder,
-        scope($f),
-        $default,
-        $backendModel,
-        $sourceModel
-    );
+    $ret = ['&config.Field{'];
+    if ($path !== $pathOrg) {
+        $ret[] = sprintf('ConfigPath: `%s`, // Original: %s', $path, $pathOrg);
+    }
+    $ret[] = sprintf('ID:      "%s",', $f->attributes()->id);
+    if ('' !== trim($f->label)) {
+        $ret[] = sprintf('Label:   `%s`,', $f->label);
+    }
+    if ('' !== trim($f->comment)) {
+        $ret[] = sprintf('Comment: `%s`,', flattenString($f->comment));
+    }
+    if ('' !== trim($f->tooltip)) {
+        $ret[] = sprintf('Tooltip: `%s`,', flattenString($f->tooltip));
+    }
+    $ret[] = sprintf('Type:     %s,', $type);
+    if ((int)$f->attributes()->sortOrder > 0) {
+        $ret[] = sprintf('SortOrder: %d,', (int)$f->attributes()->sortOrder);
+    }
+    $ret[] = 'Visible: config.VisibleYes,';
+
+    $scope = scope($f);
+    if ('' !== $scope) {
+        $ret[] = sprintf('Scope:   %s,', $scope);
+    }
+    if ((int)$f->can_be_empty === 1) {
+        $ret[] = 'CanBeEmpty: true,';
+    }
+    if (false === empty($default)) {
+        $ret[] = sprintf('Default: %s,', $default);
+    }
+    if (false === empty($backendModel)) {
+        $ret[] = sprintf('// BackendModel: %s', $backendModel);
+    }
+    if (false === empty($sourceModel)) {
+        $ret[] = sprintf('// SourceModel: %s', $sourceModel);
+    }
+    $ret[] = '},';
+    return myImplode($ret);
 }
 
 function group(SimpleXMLElement $g) {
-    return sprintf('&config.Group{
-				ID:    "%s",
-				Label: `%s`,
-				Comment: `%s`,
-				SortOrder: %d,
-				Scope: %s,
-				Fields: config.FieldSlice{
-				    {{fields}}
-				},
-			},
-    ',
-        $g->attributes()->id,
-        $g->label,
-        trim($g->comment),
-        (int)$g->attributes()->sortOrder,
-        scope($g)
-    );
+    $ret = ['&config.Group{'];
+    $ret[] = 'ID:    "' . $g->attributes()->id . '",';
+    if (trim($g->label) !== '') {
+        $ret[] = 'Label:    `' . flattenString($g->label) . '`,';
+    }
+    if (trim($g->comment) !== '') {
+        $ret[] = 'Comment:    `' . flattenString($g->comment) . '`,';
+    }
+    if ((int)$g->attributes()->sortOrder > 0) {
+        $ret[] = 'SortOrder:    ' . intval($g->attributes()->sortOrder) . ',';
+    }
+    $scope = scope($g);
+    if ('' !== $scope) {
+        $ret[] = 'Scope:    ' . $scope . ',';
+    }
+    if (trim($g->help_url) !== '') {
+        $ret[] = 'HelpURL:    `' . flattenString($g->help_url) . '`,';
+    }
+    if (trim($g->more_url) !== '') {
+        $ret[] = 'MoreURL:    `' . flattenString($g->more_url) . '`,';
+    }
+    if (trim($g->demo_link) !== '') {
+        $ret[] = 'DemoLink:    `' . flattenString($g->demo_link) . '`,';
+    }
+    if ((int)$g->hide_in_single_store_mode === 1) {
+        $ret[] = 'HideInSingleStoreMode:    true,';
+    }
+
+    $ret[] = "Fields: config.NewFieldSlice(\n{{fields}}\n),";
+    $ret[] = '},';
+
+    return myImplode($ret);
 }
 
 
 function groupHidden($id) {
     return sprintf('&config.Group{
 				ID:    "%s",
-				Fields: config.FieldSlice{
+				Fields: config.NewFieldSlice(
 				    {{fields}}
-				},
+				),
 			},
     ',
         $id
@@ -255,30 +290,34 @@ function groupHidden($id) {
 }
 
 function section(SimpleXMLElement $s) {
+    $ret = ['&config.Section{'];
 
-    return sprintf('&config.Section{
-		ID: "%s",
-		Label: "%s",
-		SortOrder: %d,
-		Scope: %s,
-		Groups: config.GroupSlice{
-		    {{groups}}
-		},
-	},
-    ',
-        $s->attributes()->id,
-        $s->label,
-        (int)$s->attributes()->sortOrder,
-        scope($s)
-    );
+    $ret[] = 'ID:    "' . $s->attributes()->id . '",';
+    if (trim($s->label) !== '') {
+        $ret[] = 'Label:    `' . flattenString($s->label) . '`,';
+    }
+    if ((int)$s->attributes()->sortOrder > 0) {
+        $ret[] = 'SortOrder:    ' . intval($s->attributes()->sortOrder) . ',';
+    }
+    $scope = scope($s);
+    if ('' !== $scope) {
+        $ret[] = 'Scope:    ' . $scope . ',';
+    }
+    if (trim($s->resource) !== '') {
+        $ret[] = 'Resource:  0,  // ' . $s->resource;
+    }
+
+    $ret[] = "Groups: config.NewGroupSlice(\n{{groups}}\n),";
+    $ret[] = '},';
+    return myImplode($ret);
 }
 
 function sectionHidden($id) {
     return sprintf('&config.Section{
 		ID: "%s",
-		Groups: config.GroupSlice{
+		Groups: config.NewGroupSlice(
 		    {{groups}}
-		},
+		),
 	},
     ',
         $id
@@ -288,19 +327,28 @@ function sectionHidden($id) {
 function scope(SimpleXMLElement $s) {
     $scope = [];
     if ((string)$s->attributes()->showInDefault === '1') {
-        $scope[] = 'config.ScopeDefaultID';
+        $scope[] = 'scope.DefaultID';
     }
     if ((string)$s->attributes()->showInWebsite === '1') {
-        $scope[] = 'config.ScopeWebsiteID';
+        $scope[] = 'scope.WebsiteID';
     }
     if ((string)$s->attributes()->showInStore === '1') {
-        $scope[] = 'config.ScopeStoreID';
+        $scope[] = 'scope.StoreID';
     }
     if (count($scope) === 3) {
-        return 'config.ScopePermAll';
+        return 'scope.PermAll';
     }
     if (count($scope) < 1) {
-        return 'nil';
+        return '';
     }
-    return 'config.NewScopePerm(' . implode(',', $scope) . ')';
+    return 'scope.NewPerm(' . implode(',', $scope) . ')';
+}
+
+function flattenString($comment) {
+    return preg_replace('~\s+~', ' ', trim($comment));
+}
+
+function myImplode(array $a) {
+    $str = implode($a, "\n") . "\n";
+    return str_replace('Magento', 'Otnegam', $str);
 }

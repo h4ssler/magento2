@@ -12,6 +12,7 @@ foreach (glob("app/code/Magento/*/etc/adminhtml/system.xml") as $systemXML) {
     print "==== $module ====\n\n";
     $xml = simplexml_load_file($systemXML);
     $sections = [];
+    $pathVariables = [];
     $moduleDefaultConfig = getDefaultConfig(str_replace('adminhtml/system.xml', 'config.xml', $systemXML));
     $moduleDefaultConfigFlat = getDefaultConfigFlat($moduleDefaultConfig);
 
@@ -32,6 +33,14 @@ foreach (glob("app/code/Magento/*/etc/adminhtml/system.xml") as $systemXML) {
                 $fields = [];
                 foreach ($group->field as $field) {
                     $fields[] = field(
+                        $field,
+                        $module,
+                        $section->attributes()->id,
+                        $group->attributes()->id,
+                        $moduleDefaultConfig,
+                        $moduleDefaultConfigFlat
+                    );
+                    $pathVariables[] = pathVarFromField(
                         $field,
                         $module,
                         $section->attributes()->id,
@@ -70,7 +79,7 @@ foreach (glob("app/code/Magento/*/etc/adminhtml/system.xml") as $systemXML) {
 
     $all = implode('', $sections);
     $sm = strtolower($module);
-    file_put_contents("zcode/config_$sm.go", '
+    file_put_contents('zcode/config_' . $sm . '.go', '
 // +build ignore
 
 package ' . $sm . '
@@ -80,8 +89,25 @@ import (
     "github.com/corestoreio/csfw/store/scope"
 )
 
+// PackageConfiguration global configuration options for this package. Used in
+// Frontend and Backend.
 var PackageConfiguration = config.NewConfiguration(' . "\n$all" . ')
     ');
+
+    if (count($pathVariables) > 0) {
+        file_put_contents("zcode/config_{$sm}_var.go", '
+// +build ignore
+
+package ' . $sm . '
+
+import (
+    "github.com/corestoreio/csfw/config/model"
+)
+
+' . implode("\n", $pathVariables)
+        );
+    }
+
 }
 
 function getDefaultConfig($configXML) {
@@ -210,10 +236,10 @@ function field(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultCon
         $ret[] = sprintf('Label:   `%s`,', $f->label);
     }
     if ('' !== trim($f->comment)) {
-        $ret[] = sprintf('Comment: `%s`,', flattenString($f->comment));
+        $ret[] = sprintf('Comment: element.LongText(`%s`),', flattenString($f->comment));
     }
     if ('' !== trim($f->tooltip)) {
-        $ret[] = sprintf('Tooltip: `%s`,', flattenString($f->tooltip));
+        $ret[] = sprintf('Tooltip: element.LongText(`%s`),', flattenString($f->tooltip));
     }
     $ret[] = sprintf('Type:     %s,', $type);
     if ((int)$f->attributes()->sortOrder > 0) {
@@ -248,7 +274,7 @@ function group(SimpleXMLElement $g) {
         $ret[] = 'Label:    `' . flattenString($g->label) . '`,';
     }
     if (trim($g->comment) !== '') {
-        $ret[] = 'Comment:    `' . flattenString($g->comment) . '`,';
+        $ret[] = 'Comment:    element.LongText(`' . flattenString($g->comment) . '`),';
     }
     if ((int)$g->attributes()->sortOrder > 0) {
         $ret[] = 'SortOrder:    ' . intval($g->attributes()->sortOrder) . ',';
@@ -258,13 +284,13 @@ function group(SimpleXMLElement $g) {
         $ret[] = 'Scope:    ' . $scope . ',';
     }
     if (trim($g->help_url) !== '') {
-        $ret[] = 'HelpURL:    `' . flattenString($g->help_url) . '`,';
+        $ret[] = 'HelpURL:    element.LongText(`' . flattenString($g->help_url) . '`),';
     }
     if (trim($g->more_url) !== '') {
-        $ret[] = 'MoreURL:    `' . flattenString($g->more_url) . '`,';
+        $ret[] = 'MoreURL:    element.LongText(`' . flattenString($g->more_url) . '`),';
     }
     if (trim($g->demo_link) !== '') {
-        $ret[] = 'DemoLink:    `' . flattenString($g->demo_link) . '`,';
+        $ret[] = 'DemoLink:    element.LongText(`' . flattenString($g->demo_link) . '`),';
     }
     if ((int)$g->hide_in_single_store_mode === 1) {
         $ret[] = 'HideInSingleStoreMode:    true,';
@@ -324,6 +350,52 @@ function sectionHidden($id) {
     );
 }
 
+
+function pathVarFromField(SimpleXMLElement $f, $module, $sID, $gID, array $moduleDefaultConfig, array &$moduleDefaultConfigFlat) {
+
+    $backendModel = '';
+    $sourceModel = '';
+
+    if ($f->backend_model) {
+        $backendModel .= $f->backend_model;
+    }
+    if ($f->source_model) {
+        $sourceModel .= $f->source_model;
+    }
+
+    $path = $pathOrg = $sID . '/' . $gID . '/' . $f->attributes()->id;
+    if (trim($f->config_path) !== '') {
+        $path = $f->config_path;
+    }
+    $pathUnderScore = str_replace('/', '_', $path);
+    $ret = [];
+    $ret[] = '// Path' . snakeCaseToUpperCamelCase($pathUnderScore) . ' => ' . flattenString($f->label) . '.';
+    $comment = flattenString($f->comment);
+    if ($comment !== '') {
+        foreach (filterComment($comment) as $c) {
+            $ret[] = '// ' . $c;
+        }
+    }
+    if (false === empty($backendModel)) {
+        $ret[] = sprintf('// BackendModel: %s', $backendModel);
+    }
+    if (false === empty($sourceModel)) {
+        $ret[] = sprintf('// SourceModel: %s', $sourceModel);
+    }
+
+    $model = 'NewStr';
+    $type = trim($f->attributes()->type);
+    if ($type === 'select' && (strpos($sourceModel, 'esno') !== false ||strpos($sourceModel, 'nabledisa') !== false )) {
+        $model = 'NewBool';
+    } elseif ($type === 'multiselect') {
+        $model = 'NewStringCSV';
+    }
+
+    $ret[] = 'var Path' . snakeCaseToUpperCamelCase($pathUnderScore) . ' = model.' . $model . '(`' . $path . '`)';
+
+    return myImplode($ret);
+}
+
 function scope(SimpleXMLElement $s) {
     $scope = [];
     if ((string)$s->attributes()->showInDefault === '1') {
@@ -348,7 +420,15 @@ function flattenString($comment) {
     return preg_replace('~\s+~', ' ', trim($comment));
 }
 
+function filterComment($comment) {
+    return explode("\n", wordwrap(strip_tags($comment), 75, "\n"));
+}
+
 function myImplode(array $a) {
     $str = implode($a, "\n") . "\n";
     return str_replace('Magento', 'Otnegam', $str);
+}
+
+function snakeCaseToUpperCamelCase($input) {
+    return str_replace(' ', '', ucwords(str_replace('_', ' ', $input)));
 }
